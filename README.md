@@ -10,7 +10,7 @@ A plant nursery storefront and garden care management system built with **PHP, M
 | Customer | Buy plants, use a simulated bKash or Nagad payment, follow orders and visits, read purchased-plant care guides, get watering reminders, rate gardeners, and chat with nursery staff. |
 | Nursery staff | Process and dispatch orders, update stock, view gardener schedules, assign visits, and answer messages. |
 | Gardener | View assigned visits and addresses, record completion notes and photos, and chat with staff. |
-| Admin | Manage plants, prices, stock, staff, and gardeners; review orders and services; filter sales by date and download a charted PDF report. |
+| Admin | Manage plants, prices, stock, staff, and gardeners; upload and privately download staff and gardener NID PDFs; review orders and services; filter sales by date and download a charted PDF report. |
 
 The interface supports light and dark themes and adapts to desktop and mobile screens.
 

@@ -59,6 +59,7 @@ elseif ($view === 'plants') {
                     <th>Salary</th>
                     <th>Status</th>
                     <th>Rating</th>
+                    <th>NID</th>
                     <th>Action</th>
                 </tr>
             </thead>
@@ -70,6 +71,7 @@ elseif ($view === 'plants') {
                         <td><?= money($staff['salary']) ?></td>
                         <td><?= h($staff['status']) ?></td>
                         <td><?= h($staff['rating'] ?: '—') ?></td>
+                        <td><?php if ($staff['nid_file_path']): ?><a href="<?= h(url('pages/admin/nid.php?id=' . $staff['id'])) ?>">Download PDF</a><?php else: ?>Not uploaded<?php endif; ?></td>
                         <td><a class="btn secondary small" href="<?= h(url('pages/admin/dashboard.php?view=staff_form&id=' . $staff['id'])) ?>">Edit</a></td>
                     </tr><?php endforeach; ?></tbody>
         </table>

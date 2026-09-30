@@ -3,6 +3,7 @@ $conn = require dirname(__DIR__) . '/includes/db_connect.php';
 require dirname(__DIR__) . '/includes/app.php';
 require dirname(__DIR__) . '/includes/commerce.php';
 require dirname(__DIR__) . '/includes/chat-functions.php';
+require dirname(__DIR__) . '/includes/staff-documents.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
@@ -11,6 +12,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 $action = $_POST['action'] ?? '';
 $return = local_return($_POST['return_to'] ?? '', 'index.php');
 $transaction = false;
+$new_nid_file = null;
 try {
     check_csrf();
     switch ($action) {
@@ -136,18 +138,23 @@ try {
             if (!in_array($status, ['Available', 'On Visit', 'Active Desk', 'On Leave', 'Inactive'])) throw new Exception('Choose a valid duty status.');
             if (one('SELECT id FROM users WHERE email=? AND id<>?', 'si', [$email, $id])) throw new Exception('An account already uses this email address.');
             $password = password_input(!$id);
+            $new_nid_file = nid_upload('nid_file');
             if ($id) {
                 mysqli_begin_transaction($conn);
                 $transaction = true;
-                $staff = one("SELECT id,role FROM users WHERE id=? AND role IN ('staff','gardener') FOR UPDATE", 'i', [$id]);
+                $staff = one("SELECT id,role,nid_file_path FROM users WHERE id=? AND role IN ('staff','gardener') FOR UPDATE", 'i', [$id]);
                 if (!$staff) throw new Exception('Staff member not found.');
                 if ($staff['role'] === 'gardener' && $role !== 'gardener' && one("SELECT id FROM services WHERE gardener_id=? AND status='assigned' LIMIT 1", 'i', [$id])) throw new Exception('This gardener has open visits. Reassign them before changing the role.');
-                run('UPDATE users SET name=?,email=?,phone=?,role=?,zone=?,salary=?,status=? WHERE id=?', 'sssssdsi', [$name, $email, $phone, $role, $zone, $salary, $status, $id]);
+                run('UPDATE users SET name=?,email=?,phone=?,role=?,zone=?,salary=?,status=?,nid_file_path=COALESCE(?,nid_file_path) WHERE id=?', 'sssssdssi', [$name, $email, $phone, $role, $zone, $salary, $status, $new_nid_file, $id]);
                 if ($password !== '') run('UPDATE users SET password_hash=? WHERE id=?', 'si', [password_hash($password, PASSWORD_DEFAULT), $id]);
                 mysqli_commit($conn);
                 $transaction = false;
+                if ($new_nid_file && $staff['nid_file_path']) {
+                    $old_nid = nid_disk_path($staff['nid_file_path']);
+                    if ($old_nid) @unlink($old_nid);
+                }
             } else {
-                run('INSERT INTO users(name,email,phone,password_hash,role,zone,salary,status) VALUES(?,?,?,?,?,?,?,?)', 'ssssssds', [$name, $email, $phone, password_hash($password, PASSWORD_DEFAULT), $role, $zone, $salary, $status]);
+                run('INSERT INTO users(name,email,phone,password_hash,role,zone,salary,status,nid_file_path) VALUES(?,?,?,?,?,?,?,?,?)', 'ssssssdss', [$name, $email, $phone, password_hash($password, PASSWORD_DEFAULT), $role, $zone, $salary, $status, $new_nid_file]);
             }
             $return = 'pages/admin/dashboard.php?view=staff';
             break;
@@ -306,6 +313,10 @@ try {
     redirect($return);
 } catch (Throwable $error) {
     if ($transaction) mysqli_rollback($conn);
+    if ($new_nid_file) {
+        $uploaded_nid = nid_disk_path($new_nid_file);
+        if ($uploaded_nid) @unlink($uploaded_nid);
+    }
     $message = $error->getMessage();
     if ($error instanceof mysqli_sql_exception) {
         error_log($message);

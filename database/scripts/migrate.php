@@ -12,6 +12,7 @@ function add_column($table, $column, $definition) {
     return true;
 }
 try {
+    add_column('users', 'nid_file_path', 'VARCHAR(255) DEFAULT NULL');
     if (add_column('plants', 'watering_hours', 'INT UNSIGNED NOT NULL DEFAULT 168')) {
         $legacy = mysqli_query($conn, "SHOW COLUMNS FROM plants LIKE 'reminder_days'");
         if (mysqli_num_rows($legacy)) mysqli_query($conn, 'UPDATE plants SET watering_hours=GREATEST(reminder_days,1)*24');

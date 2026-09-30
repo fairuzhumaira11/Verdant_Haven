@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS users (
  password_hash VARCHAR(255) NOT NULL,
  role ENUM('admin','staff','gardener','customer') NOT NULL DEFAULT 'customer',
  zone VARCHAR(100) DEFAULT NULL,
+ nid_file_path VARCHAR(255) DEFAULT NULL,
  salary DECIMAL(10,2) DEFAULT NULL,
  status VARCHAR(30) NOT NULL DEFAULT 'Available',
  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
