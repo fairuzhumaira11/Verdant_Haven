@@ -1,0 +1,6 @@
+storage/backups/
+uploads/*
+!uploads/.htaccess
+
+# Local setup notes
+HOW_TO_OPEN.md

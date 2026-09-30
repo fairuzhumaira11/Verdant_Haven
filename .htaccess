@@ -1,0 +1,39 @@
+DirectoryIndex index.php
+Options -Indexes
+
+<IfModule mod_rewrite.c>
+RewriteEngine On
+# Use /your-folder/ here when installed under a subfolder of htdocs.
+RewriteBase /
+
+# These folders contain configuration, shared PHP, SQL, and recovery backups.
+RewriteRule ^(config|database|includes|storage|tools)(/|$) - [F,L]
+RewriteRule ^(db_connect|api/config)\.php$ - [F,L]
+RewriteRule ^backup-before-php-refactor\.zip$ - [F,L]
+
+# Keep old bookmarks working after the source files have been reorganized.
+RewriteRule ^index\.html$ index.php [R=302,L]
+RewriteRule ^action\.php$ actions/handle.php [R=307,L]
+RewriteRule ^login\.(php|html)$ pages/auth/login.php [R=302,L]
+RewriteRule ^signup\.(php|html)$ pages/auth/signup.php [R=302,L]
+RewriteRule ^forgot_password\.(php|html)$ pages/auth/forgot-password.php [R=302,L]
+RewriteRule ^reset_password\.(php|html)$ pages/auth/reset-password.php [R=302,L]
+RewriteRule ^Admin/Admin_dash\.(php|html)$ pages/admin/dashboard.php [R=302,L]
+RewriteRule ^Admin/report\.(php|html)$ pages/admin/report.php [R=302,L]
+RewriteRule ^Customer/Customer_dash\.(php|html)$ pages/customer/dashboard.php [R=302,L]
+RewriteRule ^Customer/Customer_Plant_store\.(php|html)$ pages/customer/catalog.php [R=302,L]
+RewriteRule ^Customer/Customer_Plant_details\.(php|html)$ pages/customer/plant-details.php [R=302,L]
+RewriteRule ^Customer/Customer_Saved_Flora\.(php|html)$ pages/customer/saved-plants.php [R=302,L]
+RewriteRule ^Customer/Customer_myOrders\.(php|html)$ pages/customer/orders.php [R=302,L]
+RewriteRule ^Customer/Customer_gardenService\.(php|html)$ pages/customer/book-service.php [R=302,L]
+RewriteRule ^Customer/Customer_live_chat\.(php|html)$ pages/customer/chat.php [R=302,L]
+RewriteRule ^Customer/checkout\.(php|html)$ pages/customer/checkout.php [R=302,L]
+RewriteRule ^Customer/order-confirmed\.(php|html)$ pages/customer/order-confirmed.php [R=302,L]
+RewriteRule ^Customer/customer-track-status\.(php|html)$ pages/customer/track-order.php [R=302,L]
+RewriteRule ^Nursury_stuff/nursery_staff\.(php|html)$ pages/staff/dashboard.php [R=302,L]
+RewriteRule ^Nursury_stuff/Nursery_live_chat\.(php|html)$ pages/staff/chat.php [R=302,L]
+RewriteRule ^Gardener/Gardener\.(php|html)$ pages/gardener/dashboard.php [R=302,L]
+RewriteRule ^Gardener/Gardener_live_chat\.(php|html)$ pages/gardener/chat.php [R=302,L]
+RewriteRule ^payments/dummy\.(php|html)$ pages/payments/dummy.php [R=302,L]
+RewriteRule ^img/(.+)$ assets/images/$1 [R=302,L]
+</IfModule>

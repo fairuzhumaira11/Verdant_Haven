@@ -1,0 +1,158 @@
+CREATE DATABASE IF NOT EXISTS verdant_haven CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE verdant_haven;
+
+CREATE TABLE IF NOT EXISTS users (
+ id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ name VARCHAR(120) NOT NULL,
+ email VARCHAR(190) NOT NULL UNIQUE,
+ phone VARCHAR(25) NOT NULL UNIQUE,
+ password_hash VARCHAR(255) NOT NULL,
+ role ENUM('admin','staff','gardener','customer') NOT NULL DEFAULT 'customer',
+ zone VARCHAR(100) DEFAULT NULL,
+ salary DECIMAL(10,2) DEFAULT NULL,
+ status VARCHAR(30) NOT NULL DEFAULT 'Available',
+ created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS plants (
+ id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ name VARCHAR(150) NOT NULL,
+ category ENUM('indoor','outdoor','fruit','flower') NOT NULL,
+ price DECIMAL(10,2) NOT NULL,
+ old_price DECIMAL(10,2) DEFAULT NULL,
+ stock INT UNSIGNED NOT NULL DEFAULT 0,
+ image_path VARCHAR(255) DEFAULT NULL,
+ description TEXT NOT NULL,
+ care_instructions TEXT NOT NULL,
+ care_light VARCHAR(80) DEFAULT NULL,
+ care_water VARCHAR(80) DEFAULT NULL,
+ care_soil VARCHAR(80) DEFAULT NULL,
+ care_file_path VARCHAR(255) DEFAULT NULL,
+ watering_hours INT UNSIGNED NOT NULL DEFAULT 168,
+ active TINYINT(1) NOT NULL DEFAULT 1,
+ created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ CONSTRAINT chk_plant_price CHECK (price >= 0)
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS orders (
+ id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ customer_id BIGINT UNSIGNED NOT NULL,
+ status ENUM('placed','processing','dispatched','delivered','cancelled') NOT NULL DEFAULT 'placed',
+ payment_method ENUM('cod','bkash','nagad','card') NOT NULL,
+ checkout_key CHAR(64) DEFAULT NULL UNIQUE,
+ payment_status ENUM('dummy_paid','pending_cod') NOT NULL,
+ address VARCHAR(500) NOT NULL,
+ subtotal DECIMAL(10,2) NOT NULL,
+ delivery_fee DECIMAL(10,2) NOT NULL DEFAULT 0,
+ total DECIMAL(10,2) NOT NULL,
+ created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+ FOREIGN KEY (customer_id) REFERENCES users(id), INDEX(customer_id,status)
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS order_items (
+ id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ order_id BIGINT UNSIGNED NOT NULL,
+ plant_id BIGINT UNSIGNED NOT NULL,
+ plant_name VARCHAR(150) NOT NULL,
+ unit_price DECIMAL(10,2) NOT NULL,
+ quantity INT UNSIGNED NOT NULL,
+ FOREIGN KEY (order_id) REFERENCES orders(id),
+ FOREIGN KEY (plant_id) REFERENCES plants(id)
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS cart_items (
+ customer_id BIGINT UNSIGNED NOT NULL,
+ plant_id BIGINT UNSIGNED NOT NULL,
+ quantity INT UNSIGNED NOT NULL,
+ PRIMARY KEY(customer_id,plant_id),
+ FOREIGN KEY (customer_id) REFERENCES users(id),
+ FOREIGN KEY (plant_id) REFERENCES plants(id)
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS wishlist (
+ customer_id BIGINT UNSIGNED NOT NULL,
+ plant_id BIGINT UNSIGNED NOT NULL,
+ added_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ PRIMARY KEY(customer_id,plant_id),
+ FOREIGN KEY (customer_id) REFERENCES users(id),
+ FOREIGN KEY (plant_id) REFERENCES plants(id)
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS services (
+ id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ customer_id BIGINT UNSIGNED NOT NULL,
+ gardener_id BIGINT UNSIGNED DEFAULT NULL,
+ type ENUM('WATERING','TRIMMING','REPOTTING','MAINTENANCE') NOT NULL,
+ scheduled_at DATETIME NOT NULL,
+ address VARCHAR(500) NOT NULL,
+ customer_notes TEXT DEFAULT NULL,
+ gardener_notes TEXT DEFAULT NULL,
+ photo_path VARCHAR(255) DEFAULT NULL,
+ status ENUM('requested','assigned','completed','cancelled') NOT NULL DEFAULT 'requested',
+ fee DECIMAL(10,2) NOT NULL DEFAULT 0,
+ completed_at DATETIME DEFAULT NULL,
+ created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ FOREIGN KEY (customer_id) REFERENCES users(id),
+ FOREIGN KEY (gardener_id) REFERENCES users(id),
+ INDEX(customer_id,status), INDEX(gardener_id,status)
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS ratings (
+ id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ service_id BIGINT UNSIGNED NOT NULL UNIQUE,
+ customer_id BIGINT UNSIGNED NOT NULL,
+ gardener_id BIGINT UNSIGNED NOT NULL,
+ stars TINYINT UNSIGNED NOT NULL,
+ feedback TEXT DEFAULT NULL,
+ created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ FOREIGN KEY (service_id) REFERENCES services(id),
+ FOREIGN KEY (customer_id) REFERENCES users(id),
+ FOREIGN KEY (gardener_id) REFERENCES users(id),
+ CONSTRAINT chk_rating_stars CHECK (stars BETWEEN 1 AND 5)
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS messages (
+ id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ sender_id BIGINT UNSIGNED NOT NULL,
+ recipient_id BIGINT UNSIGNED NOT NULL,
+ body TEXT NOT NULL,
+ created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ read_at DATETIME DEFAULT NULL,
+ FOREIGN KEY (sender_id) REFERENCES users(id),
+ FOREIGN KEY (recipient_id) REFERENCES users(id),
+ INDEX(sender_id,recipient_id,created_at)
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS reminders (
+ id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ customer_id BIGINT UNSIGNED NOT NULL,
+ plant_id BIGINT UNSIGNED NOT NULL,
+ order_item_id BIGINT UNSIGNED DEFAULT NULL UNIQUE,
+ last_watered_at DATETIME DEFAULT NULL,
+ due_at DATETIME NOT NULL,
+ read_at DATETIME DEFAULT NULL,
+ FOREIGN KEY (customer_id) REFERENCES users(id),
+ FOREIGN KEY (plant_id) REFERENCES plants(id),
+ FOREIGN KEY (order_item_id) REFERENCES order_items(id),
+ INDEX(customer_id,due_at)
+) ENGINE=InnoDB;
+
+
+CREATE TABLE IF NOT EXISTS payments (
+ id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+ payment_id VARCHAR(80) NOT NULL UNIQUE,
+ customer_id BIGINT UNSIGNED NOT NULL,
+ order_id BIGINT UNSIGNED DEFAULT NULL UNIQUE,
+ provider ENUM('bkash','nagad') NOT NULL,
+ amount DECIMAL(10,2) NOT NULL,
+ status ENUM('created','success','failed','cancelled') NOT NULL DEFAULT 'created',
+ transaction_id VARCHAR(80) DEFAULT NULL UNIQUE,
+ wallet_last4 CHAR(4) DEFAULT NULL,
+ cart_hash CHAR(64) DEFAULT NULL,
+ address VARCHAR(500) DEFAULT NULL,
+ created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+ completed_at DATETIME DEFAULT NULL,
+ FOREIGN KEY(customer_id) REFERENCES users(id),
+ FOREIGN KEY(order_id) REFERENCES orders(id)
+) ENGINE=InnoDB;
